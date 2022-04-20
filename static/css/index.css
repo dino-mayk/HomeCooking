@@ -1,0 +1,13 @@
+.carousel {
+    top: 20px;
+}
+.carousel-item {
+    height: 600px;
+}
+.carousel-item img {
+    height: 600px;
+}
+#map {
+    width: auto;
+    height: 500px;
+}
