@@ -1,9 +1,7 @@
-from flask import Flask, render_template, redirect, make_response, request, \
-    session, abort, jsonify, url_for
-from flask_login import login_user, LoginManager, login_required, logout_user, current_user
+from flask import Flask, render_template, redirect
+from data import db_session
 from forms.login import LoginForm
 from forms.register import RegisterForm
-
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'de84.&%$djdsanj;,upy)&daogpasdnxv#&2677'
@@ -15,27 +13,8 @@ def index():
 
 
 @app.route('/register', methods=['GET', 'POST'])
-def reqister():
+def register():
     form = RegisterForm()
-    #if form.validate_on_submit():
-    #    if form.password.data != form.password_again.data:
-    #        return render_template('register.html', title='Registration',
-     #                              form=form,
-     #                              message="Passwords don't match")
-     #   db_sess = db_session.create_session()
-    #    if db_sess.query(User).filter(User.email == form.email.data).first():
-    #        return render_template('register.html', title='Registration',
-     #                              form=form,
-     #                              message="There is already such a user")
-     #   user = User(
-     #       email=form.email.data,
-     #       name=form.name.data,
-     #       surname=form.address.data,
-      #  )
-      #  user.set_password(form.password.data)
-     #   db_sess.add(user)
-     #   db_sess.commit()
-     #   return redirect('/login')
     return render_template('register.html', title='Регистрация', form=form)
 
 
@@ -48,6 +27,7 @@ def login():
 
 
 def main():
+    db_session.global_init("db/database.db")
     app.run()
 
 
