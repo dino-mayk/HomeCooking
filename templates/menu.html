@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    {% for dish_name in dishes %}
+        <div class="row">
+            <h2 class="text-center">{{dish_name}}</h2>
+            {% for dish in dishes[dish_name] %}
+                <div class="col text-center">
+                    <div class="block">
+                        <h4>{{dish[0]}}</h4>
+                        <img class="dish" src="{{dish[2]}}" alt="ошибка загрузки">
+                        <p class="text-center">{{dish[1]}}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
