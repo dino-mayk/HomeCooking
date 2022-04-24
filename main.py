@@ -5,6 +5,7 @@ from data.users import User
 from data.dishes import Dish
 from forms.login import LoginForm
 from forms.register import RegisterForm
+from forms.settings import SettingsForm
 from werkzeug.security import generate_password_hash
 
 
@@ -49,7 +50,8 @@ def reqister():
             name=form.name.data,
             surname=form.surname.data,
             email=form.email.data,
-            password=generate_password_hash(form.password.data)
+            password=generate_password_hash(form.password.data),
+            number_phone=form.number_phone.data
         )
         db_sess.add(user)
         db_sess.commit()
@@ -85,9 +87,15 @@ def logout():
     return redirect("/")
 
 
+@app.route('/account', methods=['GET', 'POST'])
+def account():
+    return render_template('account.html', title='Профиль')
+
+
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
-    return render_template('settings.html', title='Настройки')
+    form = SettingsForm()
+    return render_template('settings.html', title='Настройки', form=SettingsForm)
 
 
 def main():

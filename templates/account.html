@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+    <a href="/settings" class="btn btn-outline-secondary">
+        <i class="bi-pencil"></i>
+        изменить
+    </a>
+    <div class="row">
+        <div class="block">
+            <div class="icon">
+                <div class="col-md-4 col-sm">
+                    {% if current_user.icon == 1 %}
+                        <img src="../static/img/users/150px/{{current_user.email}}.jpg" alt=""></p>
+                    {% else %}
+                        <i class="bi-person-circle"></i>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="block">
+            <div class="data">
+                <div class="col-md-4 col-sm">
+                    <h3>
+                        {{ current_user.name }} {{ current_user.surname }}
+                    </h3>
+                    <h3>
+                        Номер телефона: {{ current_user.number_phone }}
+                    </h3>
+                    <h3 class="my">
+                        {{ current_user.email }}
+                    </h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

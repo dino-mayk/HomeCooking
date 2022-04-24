@@ -10,6 +10,8 @@
     <link href="../static/css/base.css" rel="stylesheet" type="text/css"/>
     <link href="../static/css/index.css" rel="stylesheet" type="text/css"/>
     <link href="../static/css/menu.css" rel="stylesheet" type="text/css"/>
+    <link href="../static/css/account.css" rel="stylesheet" type="text/css"/>
+    <link href="../static/css/settings.css" rel="stylesheet" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
             crossorigin="anonymous"></script>
@@ -25,7 +27,13 @@
                 <img src="../static/img/templates/logo.svg">
             </a>
             {% if current_user.is_authenticated %}
-                <a class="icon_profile" href="/settings">{{ current_user.name }}</a>
+                <a href="/account">
+                    {% if current_user.icon == 1 %}
+                        <img src="../static/img/users/30px/{{current_user.email}}.jpg" alt="" class="user_img"></p>
+                    {% else %}
+                        <i class="bi-person-circle"></i>
+                    {% endif %}
+                </a>
             {% else %}
                 <a href="/register" class="btn btn-outline-success">Регистрация</a>
                 <a href="/login" class="btn btn-outline-success">Вход</a>

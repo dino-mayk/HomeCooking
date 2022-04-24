@@ -2,6 +2,14 @@
     float: right;
     margin: 3px;
 }
-.icon_profile {
+.bi-person-circle {
+    font-size: 30px;
+    color: black;
     float: right;
+}
+.user_img {
+    position: relative;
+    top: 10px;
+    float: right;
+    border-radius: 150px;
 }
