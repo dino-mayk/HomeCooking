@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, abort
 from flask_login import login_user, LoginManager, login_required, logout_user
 from data import db_session
 from data.users import User
@@ -49,9 +49,11 @@ def reqister():
         user = User(
             name=form.name.data,
             surname=form.surname.data,
+            patronymic=form.patronymic.data,
             email=form.email.data,
             password=generate_password_hash(form.password.data),
-            number_phone=form.number_phone.data
+            number_phone=form.number_phone.data,
+            age=form.age.data
         )
         db_sess.add(user)
         db_sess.commit()
@@ -92,10 +94,22 @@ def account():
     return render_template('account.html', title='Профиль')
 
 
-@app.route('/settings', methods=['GET', 'POST'])
+@app.route('/account/settings', methods=['GET', 'POST'])
 def settings():
     form = SettingsForm()
-    return render_template('settings.html', title='Настройки', form=SettingsForm)
+    return render_template('settings.html', title='Настройки', form=form)
+
+
+@app.route('/account/delete/<int:id>', methods=['GET', 'POST'])
+def delete(id):
+    db_sess = db_session.create_session()
+    users = db_sess.query(User).filter(User.id == id).first()
+    if users:
+        db_sess.delete(users)
+        db_sess.commit()
+    else:
+        abort(404)
+    return redirect('/')
 
 
 def main():
