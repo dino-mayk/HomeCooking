@@ -11,4 +11,6 @@ class RegisterForm(FlaskForm):
     password_again = PasswordField('Повторите пароль', validators=[DataRequired()])
     name = StringField('Имя', validators=[DataRequired()])
     surname = StringField('Фамилия', validators=[DataRequired()])
+    patronymic = StringField('Отчество', validators=[DataRequired()])
+    age = StringField('Ваш возраст', validators=[DataRequired()])
     submit = SubmitField('Подтвердить')

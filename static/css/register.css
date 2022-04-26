@@ -8,3 +8,7 @@ form {
     border-radius: 5px;
     padding: 10px;
 }
+.container {
+    max-width: 1326px;
+    max-height: 55px;
+}

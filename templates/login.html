@@ -14,6 +14,16 @@
     <title>{{title}}</title>
 </head>
 <body>
+<header>
+    <div class="container">
+        <div class="my-2">
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi-arrow-left"></i>
+                Назад
+            </a>
+        </div>
+    </div>
+</header>
 <form action="/login" method="post" novalidate>
     {{ form.hidden_tag() }}
     <p>
@@ -35,8 +45,7 @@
     {% endfor %}
     </p>
     <p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
-    <p>
-        <a href="/" class="btn btn-outline-success">Назад</a>
+    <p class="text-center">
         {{ form.submit(type="submit", class="btn btn-primary") }}
     </p>
     {{message}}

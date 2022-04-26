@@ -1,0 +1,13 @@
+.card {
+    max-width: 630px;
+}
+img {
+    max-width: 150px;
+}
+.card-body img {
+    border-radius: 150px;
+}
+.bi-person-circle {
+    font-size: 150px;
+    color: black;
+}

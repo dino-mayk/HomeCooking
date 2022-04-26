@@ -14,6 +14,16 @@
     <title>{{title}}</title>
 </head>
 <body>
+<header>
+    <div class="container">
+        <div class="my-2">
+            <a href="/" class="btn btn-outline-secondary">
+                <i class="bi-arrow-left"></i>
+                Назад
+            </a>
+        </div>
+    </div>
+</header>
 <form action="/register" method="post" novalidate>
     {{ form.hidden_tag() }}
     <p>
@@ -70,8 +80,26 @@
     </div>
     {% endfor %}
     </p>
+    </p>
     <p>
-        <a href="/" class="btn btn-outline-success">Назад</a>
+        {{ form.patronymic.label }}<br>
+        {{ form.patronymic(class="form-control") }}<br>
+        {% for patronymic in form.patronymic.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </p>
+    <p>
+        {{ form.age.label }}<br>
+        {{ form.age(class="form-control") }}<br>
+        {% for error in form.age.errors %}
+    <div class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+    {% endfor %}
+    </p>
+    <p class="text-center">
         {{ form.submit(type="submit", class="btn btn-primary") }}
     </p>
     {{message}}
