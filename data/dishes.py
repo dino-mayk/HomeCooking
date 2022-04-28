@@ -13,4 +13,6 @@ class Dish(SqlAlchemyBase, UserMixin, SerializerMixin):
     content = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     photo = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     type = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    price = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    quantity = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
