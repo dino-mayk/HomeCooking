@@ -27,7 +27,6 @@
 <div class="container">
     <center>
         <div class="row mx-5 offset-md-2">
-            {{ form.hidden_tag() }}
             <div class="col-12">
                 <div class="card">
                   <div class="card-header text-center">
@@ -35,32 +34,30 @@
                   </div>
                   <div class="card-body">
                       {% if current_user.icon == 1 %}
-                        <img src="../static/img/users/150px/{{current_user.email}}.jpg" alt="">
+                        <img src="../static/img/users/150px/{{current_user.email}}.jpg" alt="" class="my-3">
                       {% else %}
                         <i class="bi-person-circle"></i>
                       {% endif %}
                       <div class="container">
-                        <div class="row">
-                            <div class="col">
-                                <form enctype="multipart/form-data" method="post">
+                        <form action="/account/settings/add_photo/{{ current_user.id }}" method="post"
+                              enctype="multipart/form-data" novalidate>
+                            <div class="row">
+                                <div class="col">
                                     <input class="form-control form-control-sm" name="file" id="formFileSm" type="file">
-                                </form>
+                                </div>
                             </div>
-                        </div>
-                        <div class="row my-3">
-                            <div class="col my-2 text-center">
-                                <a href="/account/settings/add_photo/{{ current_user.id }}"
-                                   class="btn btn-outline-info btn-sm">
-                                    Добавить
-                                </a>
+                            <div class="row my-3">
+                                <div class="col my-2 text-center">
+                                    <button type="submit" class="btn btn-outline-info btn-sm">Добавить</button>
+                                </div>
+                                <div class="col my-2 text-center">
+                                    <a href="/account/settings/delete_photo/{{ current_user.id }}"
+                                       class="btn btn-outline-danger btn-sm">
+                                        Убрать
+                                    </a>
+                                </div>
                             </div>
-                            <div class="col my-2 text-center">
-                                <a href="/account/settings/delete_photo/{{ current_user.id }}"
-                                   class="btn btn-outline-danger btn-sm">
-                                    Убрать
-                                </a>
-                            </div>
-                        </div>
+                        </form>
                       </div>
                   </div>
                 </div>
@@ -71,33 +68,21 @@
                     ФИО
                 </div>
                 <div class="card-body">
-                  <p>
-                      <br>{{ form.name(class="form-control") }}<br>
-                      {% for error in form.name.errors %}
-                  <div class="alert alert-danger" role="alert">
-                      {{ error }}
-                  </div>
-                  {% endfor %}
-                  </p>
-                  <p>
-                      <br>{{ form.surname(class="form-control") }}<br>
-                      {% for error in form.surname.errors %}
-                  <div class="alert alert-danger" role="alert">
-                      {{ error }}
-                  </div>
-                  {% endfor %}
-                  </p>
-                  <p>
-                      <br>{{ form.patronymic(class="form-control") }}<br>
-                      {% for error in form.patronymic.errors %}
-                  <div class="alert alert-danger" role="alert">
-                      {{ error }}
-                  </div>
-                  {% endfor %}
-                  </p>
-                  <p>
-                      {{ form.submit(type="submit", class="btn btn-secondary") }}
-                  </p>
+                    <form action="/account/settings/update_fio/{{ current_user.id }}" method="post"
+                              enctype="multipart/form-data" novalidate>
+                        <p>
+                            <input class="form-control" value="{{current_user.surname}}" name="surname">
+                        </p>
+                        <p>
+                            <input class="form-control" value="{{current_user.name}}" name="name">
+                        </p>
+                        <p>
+                            <input class="form-control" value="{{current_user.patronymic}}" name="patronymic">
+                        </p>
+                        <p>
+                            <button type="submit" class="btn btn-outline-info">Сохранить</button>
+                        </p>
+                    </form>
                 </div>
         </div>
             </div>
@@ -107,36 +92,24 @@
                     Личные данные
                 </div>
                 <div class="card-body">
-                    <p>
-                        {{ form.age.label }}<br>
-                        {{ form.age(class="form-control") }}<br>
-                        {% for error in form.age.errors %}
-                    <div class="alert alert-danger" role="alert">
-                        {{ error }}
-                    </div>
-                    {% endfor %}
-                    </p>
-                    <p>
-                        {{ form.number_phone.label }}<br>
-                        {{ form.number_phone(class="form-control") }}<br>
-                        {% for error in form.number_phone.errors %}
-                        <div class="alert alert-danger" role="alert">
-                        {{ error }}
-                        </div>
-                        {% endfor %}
-                    </p>
-                    <p>
-                        {{ form.email.label }}<br>
-                        {{ form.email(class="form-control") }}<br>
-                        {% for error in form.email.errors %}
-                        <div class="alert alert-danger" role="alert">
-                            {{ error }}
-                        </div>
-                        {% endfor %}
-                    </p>
-                    <p>
-                        {{ form.submit(type="submit", class="btn btn-secondary") }}
-                    </p>
+                    <form action="/account/settings/update_personal/{{current_user.id}}" method="post"
+                              enctype="multipart/form-data" novalidate>
+                        <p>
+                            <label>Возраст</label>
+                            <input class="form-control" value="{{current_user.age}}" name="age">
+                        </p>
+                        <p>
+                            <label>Номер телефона</label>
+                            <input class="form-control" value="{{current_user.number_phone}}" name="number_phone">
+                        </p>
+                        <p>
+                            <label>Электронная почта</label>
+                            <input class="form-control" value="{{current_user.email}}" name="email">
+                        </p>
+                        <p>
+                            <button type="submit" class="btn btn-outline-info">Сохранить</button>
+                        </p>
+                    </form>
                 </div></div>
             </div>
             <div class="col-12">
@@ -146,24 +119,16 @@
                     Пароль
                 </div>
                 <div class="card-body">
-                  <p>
-                      {{ form.password.label }}<br>
-                      {{ form.password(class="form-control", type="password") }}<br>
-                      {% for error in form.password.errors %}
-                      <div class="alert alert-danger" role="alert">
-                          {{ error }}
-                      </div>
-                      {% endfor %}
-                  </p>
-                  <p>
-                      {{ form.password_again.label }}<br>
-                      {{ form.password_again(class="form-control", type="password") }}<br>
-                      {% for error in form.password_again.errors %}
-                      <div class="alert alert-danger" role="alert">
-                          {{ error }}
-                      </div>
-                      {% endfor %}
-                  </p>
+                    <form action="/account/settings/update_password/{{current_user.id}}" method="post"
+                              enctype="multipart/form-data" novalidate>
+                        <p>
+                            <label>Введите новый пароль</label>
+                            <input class="form-control" name="password">
+                        </p>
+                        <p>
+                            <button type="submit" class="btn btn-outline-info">Сменить пароль</button>
+                        </p>
+                    </form>
                 </div>
         </div>
             </div>
@@ -176,7 +141,7 @@
                     <p>
                         Это приведет к безвозвратному удалению вашего аккаунта!
                     </p>
-                    <a href="/account/settings/delete/{{ current_user.id }}" class="btn btn-outline-danger">
+                    <a href="/account/settings/account_delete/{{ current_user.id }}" class="btn btn-outline-danger">
                         <i class="bi-trash3"></i>
                         Удалить
                     </a>

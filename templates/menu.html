@@ -1,20 +1,23 @@
 {% extends "base.html" %}
 {% block content %}
 <link href="../static/css/menu.css" rel="stylesheet" type="text/css"/>
-<div class="container">
+<center>
+    <div class="container">
     {% for dish_name in dishes %}
         <div class="row">
-            <h2 class="text-center">{{dish_name}}</h2>
+            <h2>{{dish_name}}</h2>
             {% for dish in dishes[dish_name] %}
-                <div class="col text-center">
+                <div class="col">
                     <div class="block">
                         <h4>{{dish[0]}}</h4>
                         <img class="dish" src="{{dish[2]}}" alt="ошибка загрузки">
-                        <p class="text-center">{{dish[1]}}</p>
+                        <h2>{{dish[3]}}₽ {{dish[4]}} шт.</h2>
+                        <p>{{dish[1]}}</p>
                     </div>
                 </div>
             {% endfor %}
         </div>
     {% endfor %}
-</div>
+    </div>
+</center>
 {% endblock %}

@@ -1,8 +1,9 @@
 .block {
     padding: 10px;
-    width: 280px;
-    height: 300px;
+    width: 300px;
+    height: 500px;
 }
-.text-center {
-    margin: 30px;
+.block img {
+    width: 250px;
+    height: 200px;
 }

@@ -28,9 +28,11 @@ def menu():
     data = {}
     for dish in dishes:
         if dish.type not in data:
-            data[dish.type] = [(dish.name, dish.content, dish.photo, dish.created_date)]
+            data[dish.type] = [(dish.name, dish.content, dish.photo, dish.price,
+                                dish.quantity, dish.created_date)]
         else:
-            data[dish.type].append((dish.name, dish.content, dish.photo, dish.created_date))
+            data[dish.type].append((dish.name, dish.content, dish.photo, dish.price,
+                                    dish.quantity, dish.created_date))
     return render_template("menu.html", title='Меню', dishes=data)
 
 
