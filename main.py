@@ -8,6 +8,7 @@ from forms.register import RegisterForm
 from werkzeug.security import generate_password_hash
 from os import remove
 from PIL import Image, UnidentifiedImageError
+import bot
 
 
 app = Flask(__name__)
@@ -34,6 +35,30 @@ def menu():
             data[dish.type].append((dish.name, dish.content, dish.photo, dish.price,
                                     dish.quantity, dish.created_date))
     return render_template("menu.html", title='Меню', dishes=data)
+
+
+@app.route("/buy", methods=['GET'])
+def buy():
+    return render_template("buy.html", title='Заказать')
+
+
+@app.route("/buy/<int:id>", methods=['GET', 'POST'])
+def send(id):
+    # requesting user data
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == id).first()
+    name = user.name
+    surname = user.surname
+    patronymic = user.patronymic
+    email = user.email
+    number_phone = user.number_phone
+    age = user.age
+    icon = user.icon
+    # collecting data to send to the bot
+    dish = request.form.get('dish')
+    # sending data to the bot
+    bot.send_telegram(f'{surname} {name} {patronymic}\n{email} {number_phone} {age}\nзаказ на {dish}')
+    return redirect('/buy')
 
 
 @app.route('/register', methods=['GET', 'POST'])

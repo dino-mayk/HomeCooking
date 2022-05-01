@@ -22,6 +22,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     surname = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     patronymic = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     email = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
+    basket = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     number_phone = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
     user_type = sqlalchemy.Column(sqlalchemy.Integer, default=0)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
