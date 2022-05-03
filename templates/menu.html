@@ -11,8 +11,25 @@
                     <div class="block">
                         <h4>{{dish[0]}}</h4>
                         <img class="dish" src="{{dish[2]}}" alt="ошибка загрузки">
-                        <h2>{{dish[3]}}₽ {{dish[4]}} шт.</h2>
-                        <p>{{dish[1]}}</p>
+                        <h2>{{dish[3]}}₽ {{dish[4]}} гр</h2>
+                        <div class="about">
+                            <p>{{dish[1]}}</p>
+                        </div>
+                        {% if current_user.is_authenticated %}
+                            {% if dish[0] in current_user.basket %}
+                                <a href="/menu/delete_product/{{ dish[0] }}"
+                                   class="btn btn-light">
+                                    <i class="bi bi-cart2"></i>
+                                    В корзине
+                                </a>
+                            {% else %}
+                                <a href="/menu/add_product/{{ dish[0] }}"
+                                   class="btn btn-info">
+                                    <i class="bi bi-cart2"></i>
+                                    В корзину
+                                </a>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </div>
             {% endfor %}

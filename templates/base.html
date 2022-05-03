@@ -52,7 +52,7 @@
                 </li>
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                      <a class="nav-link" aria-current="page" href="/">Заказать</a>
+                      <a class="nav-link" aria-current="page" href="/buy">Заказать</a>
                     </li>
                 {% endif %}
                 <li class="nav-item">
@@ -67,5 +67,8 @@
 <main role="main" class="container">
     {% block content %}{% endblock %}
 </main>
+<footer>
+    <h4 class="number_phone">8 (473) 207-01-37</h4>
+</footer>
 </body>
 </html>

@@ -13,3 +13,7 @@
     float: right;
     border-radius: 150px;
 }
+.number_phone {
+    text-align: right;
+    margin: 10px;
+}
