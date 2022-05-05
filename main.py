@@ -1,14 +1,15 @@
 from flask import Flask, render_template, redirect, abort, request
-from flask_login import login_user, LoginManager, login_required, logout_user
+from flask_login import login_user, LoginManager, login_required, logout_user, current_user
 from data import db_session
 from data.users import User
 from data.dishes import Dish
 from forms.login import LoginForm
 from forms.register import RegisterForm
+from forms.confirmation import ConfirmationForm
 from werkzeug.security import generate_password_hash
 from os import remove
 from PIL import Image, UnidentifiedImageError
-import bot
+import bot, sqlalchemy.exc
 
 
 app = Flask(__name__)
@@ -30,35 +31,94 @@ def menu():
     for dish in dishes:
         if dish.type not in data:
             data[dish.type] = [(dish.name, dish.content, dish.photo, dish.price,
-                                dish.quantity, dish.created_date)]
+                                dish.number_of_grams, dish.created_date)]
         else:
             data[dish.type].append((dish.name, dish.content, dish.photo, dish.price,
-                                    dish.quantity, dish.created_date))
+                                    dish.number_of_grams, dish.created_date))
+    db_sess.close()
     return render_template("menu.html", title='Меню', dishes=data)
+
+
+@app.route("/menu/add_product/<dish>", methods=['GET'])
+def add_product(dish):
+    try:
+        # database search and processing
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        basket = user.basket
+        if basket is None:
+            basket = ''
+        # update data
+        basket_dishes = basket.split()
+        if dish not in basket_dishes:
+            basket_dishes.append(dish)
+        user.basket = ' '.join(basket_dishes)
+        db_sess.commit()
+        db_sess.close()
+        return redirect('/menu')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
+
+
+@app.route("/menu/delete_product/<dish>", methods=['GET'])
+@app.route("/buy/delete_product/<dish>", methods=['GET'])
+def delete_product(dish):
+    try:
+        # database search and processing
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        basket = user.basket
+        if basket is None:
+            basket = ''
+        # update data
+        basket_dishes = basket.split()
+        basket_dishes.remove(dish)
+        user.basket = ' '.join(basket_dishes)
+        db_sess.commit()
+        db_sess.close()
+        return redirect('/menu')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
 
 
 @app.route("/buy", methods=['GET'])
 def buy():
-    return render_template("buy.html", title='Заказать')
+    try:
+        db_sess = db_session.create_session()
+        basket = db_sess.query(User).filter(User.id == current_user.id).first().basket.split(' ')
+        dishes = db_sess.query(Dish).filter(Dish.name.in_(basket))
+        total_price = sum([dish.price for dish in dishes])
+        total_grams = sum([dish.number_of_grams for dish in dishes])
+        return render_template("buy.html", title='Заказать', dishes=dishes,
+                               total_price=total_price, total_grams=total_grams)
+    except AttributeError:
+        return redirect('/login')
 
 
-@app.route("/buy/<int:id>", methods=['GET', 'POST'])
-def send(id):
-    # requesting user data
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.id == id).first()
-    name = user.name
-    surname = user.surname
-    patronymic = user.patronymic
-    email = user.email
-    number_phone = user.number_phone
-    age = user.age
-    icon = user.icon
-    # collecting data to send to the bot
-    dish = request.form.get('dish')
-    # sending data to the bot
-    bot.send_telegram(f'{surname} {name} {patronymic}\n{email} {number_phone} {age}\nзаказ на {dish}')
-    return redirect('/buy')
+@app.route("/buy/send", methods=['GET', 'POST'])
+def send():
+    try:
+        # requesting user data
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        name = user.name
+        surname = user.surname
+        patronymic = user.patronymic
+        email = user.email
+        number_phone = user.number_phone
+        age = user.age
+        icon = user.icon
+        # collecting data to send to the bot
+        basket = db_sess.query(User).filter(User.id == current_user.id).first().basket.split(' ')
+        # sending data to the bot
+        bot.send_telegram(f'{surname} {name} {patronymic}\n{email} {number_phone} {age}\nзаказ на {", ".join(basket)}')
+        db_sess.close()
+        return redirect('/buy')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -73,7 +133,12 @@ def reqister():
         if db_sess.query(User).filter(User.email == form.email.data).first():
             return render_template('register.html', title='Регистрация',
                                    form=form,
-                                   message="Такой пользователь уже есть")
+                                   message="Такая электронная почта уже есть")
+        if db_sess.query(User).filter(User.number_phone == form.number_phone.data).first():
+            return render_template('register.html', title='Регистрация',
+                                   form=form,
+                                   message="Такой номер телефона уже есть")
+        global user
         user = User(
             name=form.name.data,
             surname=form.surname.data,
@@ -81,12 +146,32 @@ def reqister():
             email=form.email.data,
             password=generate_password_hash(form.password.data),
             number_phone=form.number_phone.data,
+            user_type=0,
+            icon=0,
+            basket='',
             age=form.age.data
         )
+        return redirect('/confirmation')
+    return render_template('register.html', title='Регистрация', form=form)
+
+
+@app.route('/confirmation', methods=['GET', 'POST'])
+def confirmation():
+    global user
+    form = ConfirmationForm()
+    if form.validate_on_submit():
+        if form.code.data != user.control_line:
+            return render_template('confirmation.html', title='Подтверждение',
+                                   form=form,
+                                   message="Введён неверный код подтверждения")
+        db_sess = db_session.create_session()
         db_sess.add(user)
         db_sess.commit()
+        db_sess.close()
         return redirect('/login')
-    return render_template('register.html', title='Регистрация', form=form)
+    user.send_email(user.email)
+    print(user.control_line)
+    return render_template('confirmation.html', title='Регистрация', form=form)
 
 
 @login_manager.user_loader
@@ -101,6 +186,7 @@ def login():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
+        db_sess.close()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             return redirect("/")
@@ -119,20 +205,30 @@ def logout():
 
 @app.route('/account', methods=['GET'])
 def account():
-    return render_template('account.html', title='Профиль')
+    try:
+        if current_user.id:
+            return render_template('account.html', title='Профиль')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
 
 
 @app.route('/account/settings', methods=['GET', 'POST'])
 def settings():
-    return render_template('settings.html', title='Настройки')
+    try:
+        if current_user.id:
+            return render_template('settings.html', title='Настройки')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
 
 
-@app.route('/account/settings/add_photo/<int:id>', methods=['GET', 'POST'])
-def add_photo(id):
+@app.route('/account/settings/add_photo', methods=['GET', 'POST'])
+def add_photo():
     try:
         # request to the database
         db_sess = db_session.create_session()
-        users = db_sess.query(User).filter(User.id == id).first()
+        users = db_sess.query(User).filter(User.id == current_user.id).first()
         # creating variables
         name = users.email
         file = request.files['file']
@@ -156,75 +252,113 @@ def add_photo(id):
         # completing and saving changes
         users.icon = True
         db_sess.commit()
+        db_sess.close()
+        return redirect('/account/settings')
     except UnidentifiedImageError:
         # if the image in the form is not present
         return redirect('/account/settings')
-    return redirect('/account/settings')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
 
 
-@app.route('/account/settings/delete_photo/<int:id>', methods=['GET', 'POST', 'DELETE'])
-def delete_photo(id):
+@app.route('/account/settings/delete_photo', methods=['GET', 'POST'])
+def delete_photo():
     try:
         db_sess = db_session.create_session()
-        users = db_sess.query(User).filter(User.id == id).first()
+        users = db_sess.query(User).filter(User.id == current_user.id).first()
         name = users.email
         remove(f'static/img/users/150px/{name}.jpg')
         remove(f'static/img/users/30px/{name}.jpg')
         users.icon = False
         db_sess.commit()
+        db_sess.close()
+        return redirect('/account/settings')
     except FileNotFoundError:
         # if there was no image at all
         return redirect('/account/settings')
-    return redirect('/account/settings')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
 
 
-@app.route('/account/settings/update_fio/<int:id>', methods=['GET', 'POST'])
-def update_fio(id):
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.id == id).first()
-    user.name = request.form.get('name')
-    user.surname = request.form.get('surname')
-    user.patronymic = request.form.get('patronymic')
-    db_sess.commit()
-    return redirect('/account/settings')
-
-
-@app.route('/account/settings/update_personal/<int:id>', methods=['GET', 'POST'])
-def update_personal(id):
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.id == id).first()
-    user.age = request.form.get('age')
-    user.number_phone = request.form.get('number_phone')
-    user.email = request.form.get('email')
-    db_sess.commit()
-    return redirect('/account/settings')
-
-
-@app.route('/account/settings/update_password/<int:id>', methods=['GET', 'POST'])
-def update_password(id):
-    db_sess = db_session.create_session()
-    user = db_sess.query(User).filter(User.id == id).first()
-    user.password = generate_password_hash(request.form.get('password'))
-    db_sess.commit()
-    return redirect('/account/settings')
-
-
-@app.route('/account/settings/account_delete/<int:id>', methods=['GET', 'POST', 'DELETE'])
-def account_delete(id):
-    db_sess = db_session.create_session()
-    users = db_sess.query(User).filter(User.id == id).first()
-    name = users.email
-    if users:
-        try:
-            remove(f'static/img/users/150px/{name}.jpg')
-            remove(f'static/img/users/30px/{name}.jpg')
-        except FileNotFoundError:
-            pass
-        db_sess.delete(users)
+@app.route('/account/settings/update_fio', methods=['GET', 'POST'])
+def update_fio():
+    try:
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        user.name = request.form.get('name')
+        user.surname = request.form.get('surname')
+        user.patronymic = request.form.get('patronymic')
         db_sess.commit()
-    else:
-        abort(404)
-    return redirect('/')
+        db_sess.close()
+        return redirect('/account/settings')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
+    except sqlalchemy.exc.IntegrityError:
+        # if a registered user tries to change through a request
+        return redirect('/account/settings')
+
+
+@app.route('/account/settings/update_personal', methods=['GET', 'POST'])
+def update_personal():
+    try:
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        user.age = request.form.get('age')
+        user.number_phone = request.form.get('number_phone')
+        user.email = request.form.get('email')
+        db_sess.commit()
+        db_sess.close()
+        return redirect('/account/settings')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
+    except sqlalchemy.exc.IntegrityError:
+        # if a registered user tries to change through a request
+        return redirect('/account/settings')
+
+
+@app.route('/account/settings/update_password', methods=['GET', 'POST'])
+def update_password():
+    try:
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        try:
+            user.password = generate_password_hash(request.form.get('password'))
+            db_sess.commit()
+            db_sess.close()
+        except AttributeError:
+            # if a registered user tries to change through a request
+            return redirect('/account/settings')
+        return redirect('/account/settings')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
+
+
+@app.route('/account/settings/account_delete', methods=['GET', 'POST'])
+def account_delete():
+    try:
+        db_sess = db_session.create_session()
+        users = db_sess.query(User).filter(User.id == current_user.id).first()
+        name = users.email
+        if users:
+            try:
+                remove(f'static/img/users/150px/{name}.jpg')
+                remove(f'static/img/users/30px/{name}.jpg')
+            except FileNotFoundError:
+                pass
+            db_sess.delete(users)
+            db_sess.commit()
+            db_sess.close()
+        else:
+            abort(404)
+        return redirect('/')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
 
 
 def main():
