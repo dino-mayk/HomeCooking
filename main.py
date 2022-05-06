@@ -1,15 +1,14 @@
 from flask import Flask, render_template, redirect, abort, request
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
-from data import db_session
-from data.users import User
 from data.dishes import Dish
 from forms.login import LoginForm
 from forms.register import RegisterForm
 from forms.confirmation import ConfirmationForm
 from werkzeug.security import generate_password_hash
-from os import remove
+from os import remove, listdir
 from PIL import Image, UnidentifiedImageError
 import bot, sqlalchemy.exc
+from functions import *
 
 
 app = Flask(__name__)
@@ -49,10 +48,16 @@ def add_product(dish):
         if basket is None:
             basket = ''
         # update data
-        basket_dishes = basket.split()
+        if basket != '':
+            basket_dishes = basket.split(';')
+        else:
+            basket_dishes = []
         if dish not in basket_dishes:
             basket_dishes.append(dish)
-        user.basket = ' '.join(basket_dishes)
+        if len(basket_dishes) != 1:
+            user.basket = ';'.join(basket_dishes)
+        else:
+            user.basket = basket_dishes[0]
         db_sess.commit()
         db_sess.close()
         return redirect('/menu')
@@ -62,22 +67,20 @@ def add_product(dish):
 
 
 @app.route("/menu/delete_product/<dish>", methods=['GET'])
-@app.route("/buy/delete_product/<dish>", methods=['GET'])
-def delete_product(dish):
+def delete_product_from_menu(dish):
     try:
-        # database search and processing
-        db_sess = db_session.create_session()
-        user = db_sess.query(User).filter(User.id == current_user.id).first()
-        basket = user.basket
-        if basket is None:
-            basket = ''
-        # update data
-        basket_dishes = basket.split()
-        basket_dishes.remove(dish)
-        user.basket = ' '.join(basket_dishes)
-        db_sess.commit()
-        db_sess.close()
+        delete_dish(current_user.id, dish)
         return redirect('/menu')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
+
+
+@app.route("/buy/delete_product/<dish>", methods=['GET'])
+def delete_product_from_buy(dish):
+    try:
+        delete_dish(current_user.id, dish)
+        return redirect('/buy')
     except AttributeError:
         # if the request comes from an unregistered user
         return redirect('/login')
@@ -87,12 +90,10 @@ def delete_product(dish):
 def buy():
     try:
         db_sess = db_session.create_session()
-        basket = db_sess.query(User).filter(User.id == current_user.id).first().basket.split(' ')
+        basket = db_sess.query(User).filter(User.id == current_user.id).first().basket.split(';')
         dishes = db_sess.query(Dish).filter(Dish.name.in_(basket))
         total_price = sum([dish.price for dish in dishes])
-        total_grams = sum([dish.number_of_grams for dish in dishes])
-        return render_template("buy.html", title='Заказать', dishes=dishes,
-                               total_price=total_price, total_grams=total_grams)
+        return render_template("buy.html", title='Заказать', dishes=dishes, total_price=total_price)
     except AttributeError:
         return redirect('/login')
 
@@ -110,15 +111,26 @@ def send():
         number_phone = user.number_phone
         age = user.age
         icon = user.icon
+        if icon == 1:
+            icon = f'static/img/users/150px/{email}.jpg'
+        else:
+            icon = ''
         # collecting data to send to the bot
-        basket = db_sess.query(User).filter(User.id == current_user.id).first().basket.split(' ')
+        basket = db_sess.query(User).filter(User.id == current_user.id).first().basket.split(';')
         # sending data to the bot
-        bot.send_telegram(f'{surname} {name} {patronymic}\n{email} {number_phone} {age}\nзаказ на {", ".join(basket)}')
+        bot.send_telegram(f'{surname} {name} {patronymic}\n{email} {number_phone} {age}\nзаказ на {";".join(basket)}',
+                          icon)
         db_sess.close()
         return redirect('/buy')
     except AttributeError:
         # if the request comes from an unregistered user
         return redirect('/login')
+
+
+@app.route("/gallery", methods=['GET'])
+def gallery():
+    photos = listdir('static/img/templates/other')
+    return render_template("gallery.html", title='Наше кафе', photos=photos)
 
 
 @app.route('/register', methods=['GET', 'POST'])

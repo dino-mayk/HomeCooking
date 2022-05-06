@@ -33,12 +33,14 @@
         {% endfor %}
         <div class="row my-5">
             <div class="col">
-                <h3>Итого {{ total_price }}₽ {{ total_grams }}гр</h3>
-                <a href="/buy/send"
-                        class="btn btn-info my-3">
-                        <i class="bi bi-bag"></i>
-                        Заказать
-                    </a>
+                <h3>Итого {{ total_price }}₽</h3>
+                {% if total_price != 0 %}
+                    <a href="/buy/send"
+                            class="btn btn-info my-3">
+                            <i class="bi bi-bag"></i>
+                            Заказать
+                        </a>
+                {% endif %}
             </div>
         </div>
     </div>

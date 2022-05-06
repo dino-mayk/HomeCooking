@@ -8,3 +8,13 @@ img {
     font-size: 150px;
     color: black;
 }
+.bi-eye {
+    position: relative;
+    bottom: 8px;
+    font-size: 25px;
+}
+.bi-eye-slash {
+    position: relative;
+    bottom: 8px;
+    font-size: 25px;
+}
