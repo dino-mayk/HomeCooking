@@ -1,14 +1,14 @@
-from flask import Flask, render_template, redirect, abort, request
+from flask import Flask, render_template, redirect, abort, request, url_for
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
 from data.dishes import Dish
 from forms.login import LoginForm
 from forms.register import RegisterForm
-from forms.confirmation import ConfirmationForm
 from werkzeug.security import generate_password_hash
 from os import remove, listdir
 from PIL import Image, UnidentifiedImageError
 import bot, sqlalchemy.exc
 from functions import *
+from requests import get
 
 
 app = Flask(__name__)
@@ -121,10 +121,15 @@ def send():
         bot.send_telegram(f'{surname} {name} {patronymic}\n{email} {number_phone} {age}\nзаказ на {";".join(basket)}',
                           icon)
         db_sess.close()
-        return redirect('/buy')
+        return redirect('/buy/send/ordered')
     except AttributeError:
         # if the request comes from an unregistered user
         return redirect('/login')
+
+
+@app.route("/buy/send/ordered", methods=['GET', 'POST'])
+def ordered():
+    return render_template("ordered.html", title='Заказ подтверждён')
 
 
 @app.route("/gallery", methods=['GET'])
@@ -150,7 +155,16 @@ def reqister():
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Такой номер телефона уже есть")
-        global user
+        try:
+            int(form.age.data)
+        except ValueError:
+            return render_template('register.html', title='Регистрация',
+                                   form=form,
+                                   message="Некорректный возраст")
+        if int(form.age.data) <= 0:
+            return render_template('register.html', title='Регистрация',
+                                   form=form,
+                                   message="Некорректный возраст")
         user = User(
             name=form.name.data,
             surname=form.surname.data,
@@ -158,32 +172,25 @@ def reqister():
             email=form.email.data,
             password=generate_password_hash(form.password.data),
             number_phone=form.number_phone.data,
-            user_type=0,
             icon=0,
             basket='',
             age=form.age.data
         )
-        return redirect('/confirmation')
+        return redirect(url_for('.confirmation', user))
     return render_template('register.html', title='Регистрация', form=form)
 
 
 @app.route('/confirmation', methods=['GET', 'POST'])
-def confirmation():
-    global user
-    form = ConfirmationForm()
-    if form.validate_on_submit():
-        if form.code.data != user.control_line:
-            return render_template('confirmation.html', title='Подтверждение',
-                                   form=form,
-                                   message="Введён неверный код подтверждения")
-        db_sess = db_session.create_session()
-        db_sess.add(user)
-        db_sess.commit()
-        db_sess.close()
-        return redirect('/login')
+def confirmation(user):
+    print(user)
     user.send_email(user.email)
-    print(user.control_line)
-    return render_template('confirmation.html', title='Регистрация', form=form)
+    db_sess = db_session.create_session()
+    if request.form.get('code') != user.control_line:
+        return render_template('confirmation.html', title='Подтверждение', message="Введён неверный код подтверждения")
+    db_sess.add(user)
+    db_sess.commit()
+    db_sess.close()
+    return redirect('/login')
 
 
 @login_manager.user_loader

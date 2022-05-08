@@ -2,10 +2,16 @@
     top: 20px;
 }
 .carousel-item {
-    height: 600px;
+    height: auto;
+    position: relative;
+    padding-top: 56.25%;
 }
 .carousel-item img {
-    height: 600px;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
 }
 #map {
     width: auto;

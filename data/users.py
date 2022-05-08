@@ -1,13 +1,9 @@
-import datetime
-from random import randrange
-
-import sqlalchemy
+import datetime, random, sqlalchemy
 from sqlalchemy_serializer import SerializerMixin
 from .db_session import SqlAlchemyBase
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash
 import smtplib
-# import os
 from email.mime.text import MIMEText
 
 
@@ -53,8 +49,4 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
 
 
 def create_control_line():
-    symbols = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
-    control_line = ''
-    for _ in range(4):
-        control_line += symbols[randrange(len(symbols))]
-    return control_line
+    return random.randrange(1000, 9999)

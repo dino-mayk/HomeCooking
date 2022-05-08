@@ -1,5 +1,5 @@
 from PIL import Image
 
-im = Image.open("static/img/users/150px/ksenia_shiraeva@yandex.com.jpg")
-im2 = im.resize((30, 30))
-im2.save("static/img/users/30px/ksenia_shiraeva@yandex.com.jpg")
+im = Image.open("static/img/templates/16 by 9/1.jpeg")
+im2 = im.resize((1024, 768))
+im2.save("static/img/templates/4 by 3/1.jpeg")

@@ -9,34 +9,14 @@
     <link href="../static/css/confirmation.css" rel="stylesheet" type="text/css"/>
     <title>{{title}}</title>
 </head>
-<body>
-<header>
-    <div class="container">
-        <div class="my-2">
-            <a href="/register" class="btn btn-outline-secondary">
-                <i class="bi-arrow-left"></i>
-                Назад
-            </a>
-        </div>
-    </div>
-</header>
-<form action="/confirmation" method="post" novalidate>
-    {{ form.hidden_tag() }}
-    <p class="text-center">
-        {{ form.code.label }}<br>
-        {{ form.code(class="form-control") }}<br>
-        {% for error in form.code.errors %}
-    <div class="alert alert-danger" role="alert">
-        {{ error }}
-    </div>
-    {% endfor %}
-    </p>
-    <a href="/confirmation" class="btn btn-outline-success text-center my-3">Отправить новый код подтверждения</a>
-    <p class="text-center">
-        {{ form.submit(type="submit", class="btn btn-primary") }}
-    </p>
-    {{message}}
-</form>
+<center>
+    <body>
+    <form action="/confirmation" method="post" novalidate>
+        <input class="form-control" placeholder="Введите код на вашей почте" name="code"/>
+        <a href="/confirmation" class="btn btn-outline-success my-3">Новый код</a>
+        {{message}}
+    </form>
+</center>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
             integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
             crossorigin="anonymous"></script>
