@@ -3,7 +3,7 @@ from flask_login import login_user, LoginManager, login_required, logout_user, c
 from data.dishes import Dish
 from forms.login import LoginForm
 from forms.register import RegisterForm
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from os import remove, listdir
 from PIL import Image, UnidentifiedImageError
 import bot, sqlalchemy.exc
@@ -142,11 +142,15 @@ def gallery():
 def reqister():
     form = RegisterForm()
     if form.validate_on_submit():
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.email == form.email.data).first()
+        if user.type == 0:
+            db_sess.delete(user)
+            db_sess.commit()
         if form.password.data != form.password_again.data:
             return render_template('register.html', title='Регистрация',
                                    form=form,
                                    message="Пароли не совпадают")
-        db_sess = db_session.create_session()
         if db_sess.query(User).filter(User.email == form.email.data).first():
             return render_template('register.html', title='Регистрация',
                                    form=form,
@@ -174,23 +178,36 @@ def reqister():
             number_phone=form.number_phone.data,
             icon=0,
             basket='',
+            type=0,
             age=form.age.data
         )
-        return redirect(url_for('.confirmation', user))
+        db_sess.add(user)
+        db_sess.commit()
+        db_sess.close()
+        return redirect(url_for('.confirmation', email=form.email.data,
+                                password=generate_password_hash(form.password.data)))
     return render_template('register.html', title='Регистрация', form=form)
 
 
-@app.route('/confirmation', methods=['GET', 'POST'])
-def confirmation(user):
-    print(user)
-    user.send_email(user.email)
+@app.route('/confirmation/<email>/<password>', methods=['GET', 'POST'])
+def confirmation(email, password):
     db_sess = db_session.create_session()
-    if request.form.get('code') != user.control_line:
-        return render_template('confirmation.html', title='Подтверждение', message="Введён неверный код подтверждения")
-    db_sess.add(user)
-    db_sess.commit()
-    db_sess.close()
-    return redirect('/login')
+    user = db_sess.query(User).filter(User.email == email).first()
+    if not user:
+        return redirect('/register')
+    user.send_email(email)
+    print(user.control_line)
+    print(request.method)
+    if request.method == 'post':
+        print(1)
+        if request.form.get('code') != user.control_line:
+            return render_template('confirmation.html', title='Подтверждение',
+                                   message="Введён неверный код подтверждения")
+        user.type = 1
+        db_sess.commit()
+        db_sess.close()
+        return redirect('/login')
+    return render_template('confirmation.html', title='Подтверждение', email=email, password=password)
 
 
 @login_manager.user_loader

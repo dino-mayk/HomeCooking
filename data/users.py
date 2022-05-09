@@ -20,6 +20,7 @@ class User(SqlAlchemyBase, UserMixin, SerializerMixin):
     email = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
     basket = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     number_phone = sqlalchemy.Column(sqlalchemy.String, unique=True, nullable=False)
+    type = sqlalchemy.Column(sqlalchemy.Integer, nullable=False)
     created_date = sqlalchemy.Column(sqlalchemy.DateTime, default=datetime.datetime.now)
 
     def check_password(self, password):
