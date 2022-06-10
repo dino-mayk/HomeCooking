@@ -11,6 +11,16 @@
     <title>{{title}}</title>
 </head>
 <body>
+<header>
+    <div class="container">
+        <div class="my-3">
+            <a href="/account" class="btn btn-outline-secondary">
+                <i class="bi-arrow-left"></i>
+                Назад
+            </a>
+        </div>
+    </div>
+</header>
 <div class="container my-4">
     <center>
         <div class="row mx-5 offset-md-2">
@@ -20,10 +30,11 @@
                       Иконка профиля
                   </div>
                   <div class="card-body">
-                      {% if current_user.icon == 1 %}
-                        <img src="../static/img/users/150px/{{current_user.email}}.jpg" alt="" class="my-3">
+                      {% if current_user.icon %}
+                        <img src="../static/img/users/150px/{{ current_user.email }}.{{ current_user.icon }}"
+                             alt="" class="my-3">
                       {% else %}
-                        <i class="bi-person-circle"></i>
+                        <img src="../static/img/templates/png/default.png" alt=""></p>
                       {% endif %}
                       <div class="container">
                         <form action="/account/settings/add_photo" method="post"

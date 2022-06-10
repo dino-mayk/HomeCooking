@@ -2,13 +2,6 @@
     width: 200px;
     height: 200px;
 }
-.block i {
-    position: relative;
-    bottom: 40px;
-    left: 90px;
-    font-size: 150px;
-    color: black;
-}
 .icon img {
     border-radius: 150px;
 }

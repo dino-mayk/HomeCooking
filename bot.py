@@ -3,10 +3,13 @@ import json
 
 
 def send_telegram(text: str, icon: str):
-    token = "5386269245:AAGDVEgztCLzjZpjpwVAFm-D1G-1z54_2cc"
+    with open('security.json', 'r', encoding='utf8') as security:
+        security = json.load(security)
+        token = security['bot_token']
+        channel_id = security['chat_id']
     url = "https://api.telegram.org/bot"
-    channel_id = "-1001514814642"
     url += token
+    print(icon)
     if icon != '':
         method = url + "/sendPhoto"
         img = open(icon, 'rb')

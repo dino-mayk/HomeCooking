@@ -15,10 +15,11 @@
         <div class="block">
             <div class="icon">
                 <div class="col-md-4 col-sm">
-                    {% if current_user.icon == 1 %}
-                        <img src="../static/img/users/150px/{{current_user.email}}.jpg" alt=""></p>
+                    {% if current_user.icon %}
+                        <img src="../static/img/users/150px/{{ current_user.email }}.{{ current_user.icon }}"
+                             alt="" class="my-3">
                     {% else %}
-                        <i class="bi-person-circle"></i>
+                        <img src="static/img/templates/png/default.png" alt=""></p>
                     {% endif %}
                 </div>
             </div>

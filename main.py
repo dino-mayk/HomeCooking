@@ -1,14 +1,15 @@
 from flask import Flask, render_template, redirect, abort, request, url_for
+from waitress import serve
 from flask_login import login_user, LoginManager, login_required, logout_user, current_user
 from data.dishes import Dish
 from forms.login import LoginForm
 from forms.register import RegisterForm
-from werkzeug.security import generate_password_hash, check_password_hash
-from os import remove, listdir
+from forms.confirmation import ConfirmationForm
+from werkzeug.security import generate_password_hash
+from os import remove, listdir, rename
 from PIL import Image, UnidentifiedImageError
 import bot, sqlalchemy.exc
 from functions import *
-from requests import get
 
 
 app = Flask(__name__)
@@ -53,7 +54,7 @@ def add_product(dish):
         else:
             basket_dishes = []
         if dish not in basket_dishes:
-            basket_dishes.append(dish)
+            basket_dishes.append(f'{dish}_1')
         if len(basket_dishes) != 1:
             user.basket = ';'.join(basket_dishes)
         else:
@@ -61,6 +62,37 @@ def add_product(dish):
         db_sess.commit()
         db_sess.close()
         return redirect('/menu')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
+
+
+@app.route("/buy/update_product/<product>/<operation>", methods=['GET', 'POST'])
+def update_product(product, operation):
+    try:
+        # search and collection of data from the database
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        basket = user.basket.split(';')
+        basket = [(dish.split('_')[0], dish.split('_')[-1]) for dish in basket]
+        dict_basket = {}
+        for dish in basket:
+            name = dish[0]
+            count = dish[-1]
+            dict_basket[name] = count
+        # changing product data
+        if operation == '-':
+            if int(dict_basket[product]) > 1:
+                dict_basket[product] = str(int(dict_basket[product]) - 1)
+        else:
+            if int(dict_basket[product]) < 9:
+                dict_basket[product] = str(int(dict_basket[product]) + 1)
+        # saving and completing
+        basket = ';'.join([f'{dish[0]}_{dish[-1]}' for dish in dict_basket.items()])
+        user.basket = basket
+        db_sess.commit()
+        db_sess.close()
+        return redirect('/buy')
     except AttributeError:
         # if the request comes from an unregistered user
         return redirect('/login')
@@ -91,9 +123,16 @@ def buy():
     try:
         db_sess = db_session.create_session()
         basket = db_sess.query(User).filter(User.id == current_user.id).first().basket.split(';')
-        dishes = db_sess.query(Dish).filter(Dish.name.in_(basket))
-        total_price = sum([dish.price for dish in dishes])
-        return render_template("buy.html", title='Заказать', dishes=dishes, total_price=total_price)
+        basket = [(dish.split('_')[0], dish.split('_')[-1]) for dish in basket]
+        dishes = db_sess.query(Dish).filter(Dish.name.in_([dish[0] for dish in basket]))
+        dict_basket = {}
+        for dish in basket:
+            name = dish[0]
+            count = dish[-1]
+            dict_basket[name] = count
+        total_price = sum([dish.price * int(dict_basket[dish.name]) for dish in dishes])
+        return render_template("buy.html", title='Корзина', dishes=dishes,
+                               basket=dict_basket, total_price=total_price)
     except AttributeError:
         return redirect('/login')
 
@@ -110,9 +149,8 @@ def send():
         email = user.email
         number_phone = user.number_phone
         age = user.age
-        icon = user.icon
-        if icon == 1:
-            icon = f'static/img/users/150px/{email}.jpg'
+        if user.icon != '':
+            icon = f'static/img/users/150px/{email}.{user.icon}'
         else:
             icon = ''
         # collecting data to send to the bot
@@ -129,7 +167,16 @@ def send():
 
 @app.route("/buy/send/ordered", methods=['GET', 'POST'])
 def ordered():
-    return render_template("ordered.html", title='Заказ подтверждён')
+    try:
+        db_sess = db_session.create_session()
+        user = db_sess.query(User).filter(User.id == current_user.id).first()
+        user.basket = ''
+        db_sess.commit()
+        db_sess.close()
+        return render_template("ordered.html", title='Заказ подтверждён')
+    except AttributeError:
+        # if the request comes from an unregistered user
+        return redirect('/login')
 
 
 @app.route("/gallery", methods=['GET'])
@@ -144,7 +191,7 @@ def reqister():
     if form.validate_on_submit():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
-        if user.type == 0:
+        if user and user.type == 0:
             db_sess.delete(user)
             db_sess.commit()
         if form.password.data != form.password_again.data:
@@ -176,7 +223,6 @@ def reqister():
             email=form.email.data,
             password=generate_password_hash(form.password.data),
             number_phone=form.number_phone.data,
-            icon=0,
             basket='',
             type=0,
             age=form.age.data
@@ -184,30 +230,49 @@ def reqister():
         db_sess.add(user)
         db_sess.commit()
         db_sess.close()
-        return redirect(url_for('.confirmation', email=form.email.data,
-                                password=generate_password_hash(form.password.data)))
+        return redirect(url_for('.confirmation', name=form.name.data, surname=form.surname.data,
+                                patronymic=form.patronymic.data, age=form.age.data, email=form.email.data))
     return render_template('register.html', title='Регистрация', form=form)
 
 
-@app.route('/confirmation/<email>/<password>', methods=['GET', 'POST'])
-def confirmation(email, password):
+@app.route('/confirmation/<name>/<surname>/<patronymic>/<age>/<email>', methods=['GET', 'POST', 'PUT'])
+def confirmation(name, surname, patronymic, age, email):
+    global control_line
+    form = ConfirmationForm()
     db_sess = db_session.create_session()
     user = db_sess.query(User).filter(User.email == email).first()
-    if not user:
+    if not user or name != user.name or surname != user.surname or \
+            patronymic != user.patronymic or int(age) != user.age or email != user.email:
         return redirect('/register')
-    user.send_email(email)
-    print(user.control_line)
-    print(request.method)
-    if request.method == 'post':
-        print(1)
-        if request.form.get('code') != user.control_line:
-            return render_template('confirmation.html', title='Подтверждение',
+    if not form.validate_on_submit or form.code.data is None:
+        user.send_email(email)
+        control_line = user.control_line
+        return render_template('confirmation.html', title='Подтверждение', name=name, surname=surname,
+                               patronymic=patronymic, age=age, email=email, form=form)
+    else:
+        try:
+            control_line
+        except NameError:
+            control_line = None
+        try:
+            int(form.code.data)
+        except ValueError:
+            # if there is an error with the data type
+            user.send_email(email)
+            control_line = user.control_line
+            return render_template('confirmation.html', title='Подтверждение', name=name, surname=surname,
+                                   patronymic=patronymic, age=age, email=email, form=form,
+                                   message="Введён неверный код подтверждения")
+        if form.code.data != control_line:
+            user.send_email(email)
+            control_line = user.control_line
+            return render_template('confirmation.html', title='Подтверждение', name=name, surname=surname,
+                                   patronymic=patronymic, age=age, email=email, form=form,
                                    message="Введён неверный код подтверждения")
         user.type = 1
         db_sess.commit()
         db_sess.close()
         return redirect('/login')
-    return render_template('confirmation.html', title='Подтверждение', email=email, password=password)
 
 
 @login_manager.user_loader
@@ -223,12 +288,15 @@ def login():
         db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
         db_sess.close()
+        if user is None or user.check_password(form.password.data) is False:
+            return render_template('login.html',
+                                   message="Неправильный логин или пароль",
+                                   form=form)
+        if user.type == 0:
+            return redirect('/register')
         if user and user.check_password(form.password.data):
-            login_user(user, remember=form.remember_me.data)
+            login_user(user)
             return redirect("/")
-        return render_template('login.html',
-                               message="Неправильный логин или пароль",
-                               form=form)
     return render_template('login.html', title='Авторизация', form=form)
 
 
@@ -268,25 +336,35 @@ def add_photo():
         # creating variables
         name = users.email
         file = request.files['file']
+        file_type = str(file).split(' ')[-1].strip('>').strip(')').strip('(').strip("'").split('/')[-1]
+        if file_type not in ['jpeg', 'png', 'jpg', 'bmp']:
+            return redirect('/account/settings')
         file = bytes(file.read())
         if file == b'':
             raise UnidentifiedImageError
-        link_for_150px = f'static/img/users/150px/{name}.jpg'
-        link_for_30px = f'static/img/users/30px/{name}.jpg'
+        link_for_150px = f'static/img/users/150px/{name}.{file_type}'
+        link_for_50px = f'static/img/users/50px/{name}.{file_type}'
+        # deleting an old photo
+        try:
+            remove(f'static/img/users/150px/{name}.{users.icon}')
+            remove(f'static/img/users/50px/{name}.{users.icon}')
+        except FileNotFoundError:
+            # if there was no photo initially
+            pass
         # recording the original
         with open(link_for_150px, 'wb') as img_150px:
             img_150px.write(file)
-        with open(link_for_30px, 'wb') as img_30px:
-            img_30px.write(file)
+        with open(link_for_50px, 'wb') as img_50px:
+            img_50px.write(file)
         # we change the original to the desired size
         icon_old_150px = Image.open(link_for_150px)
         icon_new_150px = icon_old_150px.resize((150, 150))
         icon_new_150px.save(link_for_150px)
-        icon_old_30px = Image.open(link_for_30px)
-        icon_new_30px = icon_old_30px.resize((30, 30))
-        icon_new_30px.save(link_for_30px)
+        icon_old_50px = Image.open(link_for_50px)
+        icon_new_50px = icon_old_50px.resize((50, 50))
+        icon_new_50px.save(link_for_50px)
         # completing and saving changes
-        users.icon = True
+        users.icon = file_type
         db_sess.commit()
         db_sess.close()
         return redirect('/account/settings')
@@ -304,9 +382,13 @@ def delete_photo():
         db_sess = db_session.create_session()
         users = db_sess.query(User).filter(User.id == current_user.id).first()
         name = users.email
-        remove(f'static/img/users/150px/{name}.jpg')
-        remove(f'static/img/users/30px/{name}.jpg')
-        users.icon = False
+        try:
+            remove(f'static/img/users/150px/{name}.{users.icon}')
+            remove(f'static/img/users/50px/{name}.{users.icon}')
+        except FileNotFoundError:
+            # if there was no photo initially
+            pass
+        users.icon = ''
         db_sess.commit()
         db_sess.close()
         return redirect('/account/settings')
@@ -344,6 +426,13 @@ def update_personal():
         user = db_sess.query(User).filter(User.id == current_user.id).first()
         user.age = request.form.get('age')
         user.number_phone = request.form.get('number_phone')
+        try:
+            rename(f'static/img/users/150px/{user.email}.{user.icon}',
+                f'static/img/users/150px/{request.form.get("email")}.{user.icon}')
+            rename(f'static/img/users/50px/{user.email}.{user.icon}',
+                f'static/img/users/50px/{request.form.get("email")}.{user.icon}')
+        except FileNotFoundError:
+            pass
         user.email = request.form.get('email')
         db_sess.commit()
         db_sess.close()
@@ -382,8 +471,8 @@ def account_delete():
         name = users.email
         if users:
             try:
-                remove(f'static/img/users/150px/{name}.jpg')
-                remove(f'static/img/users/30px/{name}.jpg')
+                remove(f'static/img/users/150px/{name}.{users.icon}')
+                remove(f'static/img/users/50px/{name}.{users.icon}')
             except FileNotFoundError:
                 pass
             db_sess.delete(users)
@@ -399,7 +488,7 @@ def account_delete():
 
 def main():
     db_session.global_init("db/database.db")
-    app.run()
+    serve(app, host='0.0.0.0', port=5000, url_scheme='https')
 
 
 if __name__ == '__main__':

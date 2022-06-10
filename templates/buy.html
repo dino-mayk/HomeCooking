@@ -14,19 +14,29 @@
             <div class="col">
                 <div class="block pt-5">
                     <h4>{{ dish.name }}</h4>
-                    <h5>{{ dish.price}}₽ {{ dish.number_of_grams }}гр</h5>
+                    <h5>{{ dish.price}}₽ {{ dish.number_of_grams }}</h5>
                      <div class="about">
                          <p>{{ dish.content }}</p>
                      </div>
                 </div>
             </div>
             <div class="col">
-                <div class="block pt-5">
-                    <a href="/buy/delete_product/{{ dish.name }}"
-                       class="btn btn-danger">
-                        <i class="bi bi-trash3"></i>
-                        Удалить
-                    </a>
+                <div class="block">
+                    <p>
+                        <a href="/buy/update_product/{{ dish.name }}/-"
+                           class="btn btn-danger btn-sm">-</a>
+                        <input value="{{ basket[dish.name] }}" disabled> шт.
+                        <a href="/buy/update_product/{{ dish.name }}/+"
+                           class="btn btn-primary btn-sm">+</a>
+                    </p>
+                    <p>
+                        <a href="/buy/delete_product/{{ dish.name }}"
+                           class="btn btn-danger">
+                            <i class="bi bi-trash3"></i>
+                            Удалить
+                        </a>
+                    </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -45,4 +55,5 @@
         </div>
     </div>
 </center>
+<script src="../static/js/number_input.js"></script>
 {% endblock %}

@@ -19,8 +19,9 @@
             </a>
             {% if current_user.is_authenticated %}
                 <a href="/account">
-                    {% if current_user.icon == 1 %}
-                        <img src="../static/img/users/30px/{{current_user.email}}.jpg" alt="" class="user_img"></p>
+                    {% if current_user.icon %}
+                        <img src="../static/img/users/50px/{{ current_user.email }}.{{ current_user.icon }}"
+                             alt="" class="user_img">
                     {% else %}
                         <i class="bi-person-circle"></i>
                     {% endif %}
@@ -47,7 +48,7 @@
                 </li>
                 {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                      <a class="nav-link" aria-current="page" href="/buy">Заказать</a>
+                      <a class="nav-link" aria-current="page" href="/buy">Корзина</a>
                     </li>
                 {% endif %}
                 <li class="nav-item">

@@ -11,10 +11,20 @@
 </head>
 <body>
 <center>
-    <form action="/confirmation/{{ email }}/{{ password }}" method="post">
-        <input class="form-control" placeholder="Введите код на вашей почте" name="code"/>
-        <button type="submit" class="btn btn-outline-info my-3">Отправить</button>
-        <a href="/confirmation/{{ email }}/{{ password }}" class="btn btn-outline-success my-3">Новый код</a>
+    <form action="/confirmation/{{ name }}/{{ surname }}/{{ patronymic }}/{{ age }}/{{ email }}"
+          method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.code.label }}<br>
+            {{ form.code(class="form-control") }}<br>
+        </p>
+        <p>
+            {{ form.submit(type="submit", class="btn btn-secondary") }}
+        </p>
+        <p>
+            <a href="/confirmation/{{ name }}/{{ surname }}/{{ patronymic }}/{{ age }}/{{ email }}"
+               class="btn btn-outline-success my-3">Новый код</a>
+        </p>
         {{message}}
     </form>
 </center>
