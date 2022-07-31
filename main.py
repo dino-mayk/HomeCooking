@@ -489,6 +489,7 @@ def account_delete():
 def main():
     db_session.global_init("db/database.db")
     serve(app, host='0.0.0.0', port=5000, url_scheme='https')
+    # app.run()
 
 
 if __name__ == '__main__':
