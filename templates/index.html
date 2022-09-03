@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
 <link href="../static/css/index.css" rel="stylesheet" type="text/css"/>
-<script src="https://api-maps.yandex.ru/2.1/?apikey=844c1f31-f6a1-420f-899a-ed3e7de882b3&lang=ru_RU"
-            type="text/javascript"></script>
 <div class="carousel slide" id="carouselControls" data-bs-ride="carousel">
     <div class="carousel-inner">
         <div class="carousel-item active">
@@ -26,24 +24,18 @@
     </a>
 </div>
 <div class="container my-5">
-    <div class="row gy-5 justify-content-between">
-        <div class="col-md-8 col-sm">
-            <h3>Мы на картах</h3>
-            <div id="map"></div>
-            <script type="text/javascript">
-                ymaps.ready(init);
-                function init(){
-                    var myMap = new ymaps.Map("map", {
-                        center: [52.085679, 39.181116],
-                        zoom: 15.5
-                    });
-            myMap.geoObjects
-                .add(new ymaps.Placemark([52.085679, 39.181116]));
-                }
-            </script>
+    <div class="row gy-5">
+        <div class="col-md-3 col-sm text-center">
+            <a href="/menu" class="btn btn-outline-success">Меню</a>
         </div>
-        <div class="col-md-4 col-sm">
-            <h3>Наше меню</h3>
+        <div class="col-md-3 col-sm text-center">
+            <a href="/buy" class="btn btn-outline-success">Корзина</a>
+        </div>
+        <div class="col-md-3 col-sm text-center">
+            <a href="/location" class="btn btn-outline-success">Месторасположение</a>
+        </div>
+        <div class="col-md-3 col-sm text-center">
+            <a href="/gallery" class="btn btn-outline-success">Галерея</a>
         </div>
     </div>
 </div>

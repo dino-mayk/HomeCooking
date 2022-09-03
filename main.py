@@ -178,6 +178,9 @@ def ordered():
         # if the request comes from an unregistered user
         return redirect('/login')
 
+@app.route("/location", methods=['GET'])
+def location():
+    return render_template("location.html", title='Месторасположение')
 
 @app.route("/gallery", methods=['GET'])
 def gallery():
@@ -488,8 +491,8 @@ def account_delete():
 
 def main():
     db_session.global_init("db/database.db")
-    serve(app, host='0.0.0.0', port=5000, url_scheme='https')
-    # app.run()
+    #serve(app, host='0.0.0.0', port=5000, url_scheme='https')
+    app.run()
 
 
 if __name__ == '__main__':

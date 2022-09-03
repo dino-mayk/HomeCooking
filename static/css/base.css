@@ -2,18 +2,20 @@
     float: right;
     margin: 3px;
 }
+
 .bi-person-circle {
     font-size: 50px;
     color: black;
     float: right;
 }
+
 .user_img {
     position: relative;
     top: 10px;
     float: right;
     border-radius: 150px;
 }
+
 .number_phone {
     text-align: right;
-    margin: 10px;
 }
