@@ -16,21 +16,6 @@
                         <div class="about">
                             <p>{{dish[1]}}</p>
                         </div>
-                        {% if current_user.is_authenticated %}
-                            {% if dish[0] in current_user.basket %}
-                                <a href="/menu/delete_product/{{ dish[0] }}"
-                                   class="btn btn-light">
-                                    <i class="bi bi-cart2"></i>
-                                    В корзине
-                                </a>
-                            {% else %}
-                                <a href="/menu/add_product/{{ dish[0] }}"
-                                   class="btn btn-info">
-                                    <i class="bi bi-cart2"></i>
-                                    В корзину
-                                </a>
-                            {% endif %}
-                        {% endif %}
                     </div>
                 </div>
             {% endfor %}
