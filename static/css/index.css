@@ -1,11 +1,13 @@
 .carousel {
     top: 20px;
 }
+
 .carousel-item {
     height: auto;
     position: relative;
     padding-top: 56.25%;
 }
+
 .carousel-item img {
     position: absolute;
     left: 0;
@@ -13,7 +15,7 @@
     width: 100%;
     height: auto;
 }
-#map {
-    width: auto;
-    height: 500px;
+
+.btn-outline-success {
+    width: 200px;
 }
